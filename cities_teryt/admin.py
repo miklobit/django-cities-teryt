@@ -20,7 +20,7 @@ class CountyAdmin(admin.ModelAdmin):
 
 class MunicipalityAdmin(admin.ModelAdmin):
     list_display = ('name', 'get_type', 'county', 'province')
-    list_filter = ('type', 'province',)
+    list_filter = ('type', 'province','county',)
     search_fields = ('id', 'name', 'slug', 'county__name', 'province__name')
     ordering = ('name',)
 

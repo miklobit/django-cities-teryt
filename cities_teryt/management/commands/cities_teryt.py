@@ -54,6 +54,7 @@ class Command(BaseCommand):
         if options.get('import', False):
             for import_ in data:
                 func = getattr(self, "import_" + import_)
+                print func
                 func()
 
     def _update_or_create(self, model, **kwargs):
@@ -70,9 +71,9 @@ class Command(BaseCommand):
             obj.save()
 
     def import_province(self):
-        self.logger.info('Importing province data')
+        print('Importing province data')
         items = etree.parse(self.terc)
-        for item in items.xpath(u'//col[text()="województwo"]/ancestor::row'):
+        for item in items.xpath(u'//NAZWA_DOD[text()="województwo"]/ancestor::row'):
             values = {
                 'id': item[0].text,
                 'name': item[4].text.lower(),
@@ -81,21 +82,24 @@ class Command(BaseCommand):
             self._update_or_create(Province, **values)
 
     def import_county(self):
-        self.logger.info('Importing county data')
+        print ('Importing county data')
         items = etree.parse(self.terc)
-        for item in items.xpath(u'//col[text()[contains(.,"powiat")]]/ancestor::row'):
+        print items
+        for item in items.xpath(u'//NAZWA_DOD[text()[contains (.,"powiat")]]/ancestor::row'):
             values = {
                 'id': '%s%s' % (item[0].text, item[1].text),
                 'name': item[4].text,
                 'teryt_date': self.__str2date(item[6].text),
                 'province_id': item[0].text,
             }
+            print values
             self._update_or_create(County, **values)
 
     def import_municipality(self):
-        self.logger.info('Importing municipality data')
+        print('Importing municipality data')
         items = etree.parse(self.terc)
-        for item in items.xpath(u'//col[text()[contains(.,"gmina")]]/ancestor::row'):
+
+        for item in items.xpath(u'//NAZWA_DOD[text()[contains (.,"gmina")]]/ancestor::row'):
             values = {
                 'id': '%s%s%s' % (item[0].text, item[1].text, item[2].text),
                 'name': item[4].text,
@@ -107,9 +111,9 @@ class Command(BaseCommand):
             self._update_or_create(Municipality, **values)
 
     def import_city(self):
-        self.logger.info('Importing city data')
+        print('Importing city data')
         items = etree.parse(self.simc)
-        for item in items.xpath(u'//col[@name="RM"][text()="96"]/ancestor::row'):
+        for item in items.xpath(u'//RM[text()="96"]/ancestor::row'):
             values = {
                 'id': '%s' % item[7].text,
                 'name': item[6].text,
@@ -119,12 +123,13 @@ class Command(BaseCommand):
                 'municipality_id': '%s%s%s' % (item[0].text, item[1].text, item[2].text),
                 'type': item[4].text,
             }
+            print values
             self._update_or_create(Place, **values)
 
     def import_village(self):
-        self.logger.info('Importing village data')
+        print('Importing village data')
         items = etree.parse(self.simc)
-        for item in items.xpath(u'//col[@name="RM"][text()="01"]/ancestor::row'):
+        for item in items.xpath(u'//RM[text()="01"]/ancestor::row'):
             values = {
                 'id': '%s' % item[7].text,
                 'name': item[6].text,
@@ -137,9 +142,9 @@ class Command(BaseCommand):
             self._update_or_create(Place, **values)
 
     def import_district(self):
-        self.logger.info('Importing district data')
+        print('Importing district data')
         items = etree.parse(self.simc)
-        for item in items.xpath(u'//col[@name="RM"][text()="99"]/ancestor::row'):
+        for item in items.xpath(u'//RM[text()="99"]/ancestor::row'):
             values = {
                 'id': '%s' % item[7].text,
                 'name': item[6].text,
@@ -157,6 +162,10 @@ class Command(BaseCommand):
                 values.update({'municipality_id': city.municipality_id})
             values.update({'city': city})
             self._update_or_create(District, **values)
+
+    def flush_district(self):
+        print('Flushing district data')
+        District.objects.all().delete()
 
     def flush_province(self):
         self.logger.info('Flushing province data')
